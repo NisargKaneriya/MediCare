@@ -19,6 +19,9 @@ dependencies:
   email_validator: ^2.1.17
   crypto: ^3.0.3
   get: ^4.7.2
+  intl: ^0.20.2
+  timezone: ^0.10.1
+  flutter_local_notifications: ^19.4.0
 
 dev_dependencies:
   flutter_test:

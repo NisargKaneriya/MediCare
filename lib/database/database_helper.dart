@@ -196,7 +196,7 @@ class DatabaseHelper {
   }
 
   // Medicine operations
-  
+
   // Add medicine
   Future<int> addMedicine(MedicineModel medicine) async {
     final db = await database;
@@ -212,7 +212,7 @@ class DatabaseHelper {
       whereArgs: [userId],
       orderBy: 'created_at DESC',
     );
-    
+
     return result.map((map) => MedicineModel.fromMap(map)).toList();
   }
 
@@ -224,7 +224,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [medicineId],
     );
-    
+
     return result.isNotEmpty ? MedicineModel.fromMap(result.first) : null;
   }
 
@@ -237,7 +237,7 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [medicine.id],
     );
-    
+
     return result > 0;
   }
 
@@ -249,25 +249,62 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [medicineId],
     );
-    
+
     return result > 0;
   }
 
   // Get today's medicines for a user
+  // Future<List<MedicineModel>> getTodaysMedicines(int userId) async {
+  //   final db = await database;
+  //   final today = DateTime.now();
+  //   final todayString = today.toIso8601String().substring(0, 10);
+  //
+  //   final result = await db.query(
+  //     'medicines',
+  //     where: 'user_id = ? AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)',
+  //     whereArgs: [userId, todayString, todayString],
+  //     orderBy: 'created_at DESC',
+  //   );
+  //
+  //   return result.map((map) => MedicineModel.fromMap(map)).toList();
+  // }
   Future<List<MedicineModel>> getTodaysMedicines(int userId) async {
     final db = await database;
-    final today = DateTime.now();
-    final todayString = today.toIso8601String().substring(0, 10);
-    
+
+    final now = DateTime.now();
+    final startOfDay = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    final endOfDay = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
     final result = await db.query(
       'medicines',
-      where: 'user_id = ? AND start_date <= ? AND (end_date IS NULL OR end_date >= ?)',
-      whereArgs: [userId, todayString, todayString],
-      orderBy: 'created_at DESC',
+      where: 'user_id = ? AND start_date BETWEEN ? AND ?',
+      whereArgs: [userId, startOfDay.toIso8601String(), endOfDay.toIso8601String()],
+      orderBy: 'start_date ASC',
     );
-    
+
     return result.map((map) => MedicineModel.fromMap(map)).toList();
   }
+
+
+  Future<List<MedicineModel>> getAllMedicines(int userId) async {
+    final db = await database;
+    final res = await db.query('medicines', orderBy: 'start_date ASC');
+    return res.map((e) => MedicineModel.fromMap(e)).toList();
+  }
+
+  Future<List<MedicineModel>> getMedicinesByDate(DateTime date) async {
+    final db = await database;
+    final start = DateTime(date.year, date.month, date.day);
+    final end = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final res = await db.query(
+      'medicines',
+      where: 'start_date BETWEEN ? AND ?',
+      whereArgs: [start.toIso8601String(), end.toIso8601String()],
+      orderBy: 'start_date ASC',
+    );
+    return res.map((e) => MedicineModel.fromMap(e)).toList();
+  }
+
 
   // Close database
   Future<void> closeDatabase() async {
